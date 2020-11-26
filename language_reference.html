@@ -1,0 +1,628 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LKQL language reference &#8212; LKQL  documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/railroad.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to LKQL’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="lkql-language-reference">
+<h1>LKQL language reference<a class="headerlink" href="#lkql-language-reference" title="Permalink to this headline">¶</a></h1>
+<p>LKQL (short for Langkit query language) is a query language enabling users to
+run queries on top of source code.</p>
+<p>LKQL is based upon the [<a class="reference external" href="https://github.com/AdaCore/langkit](langkit">https://github.com/AdaCore/langkit](langkit</a>)
+technology. As such, it is theoretically capable of running queries on any
+language with a Langkit frontend. In practice for the moment, LKQL is hardwired
+for Ada.
+LKQL today is the mixture of two language subsets:</p>
+<ul class="simple">
+<li><p>The first is a general, dynamically typed, functional, small but general
+purpose programming language, including function definitions, common
+expressions, very basic support for numeric types and computations, list
+comprehensions, etc.</p></li>
+<li><p>The second is a tree query language, allowing the user to express
+very concisely a predicate over a node and its syntactic and semantic
+relatives. More examples to come.</p></li>
+</ul>
+<p>Those two languages will be documented separately. The general language will be
+documented first, because its knowledge is needed for understanding the tree
+query language.</p>
+<div class="section" id="general-purpose-language-subset">
+<h2>General purpose language subset<a class="headerlink" href="#general-purpose-language-subset" title="Permalink to this headline">¶</a></h2>
+<p>This language subset is composed of a reduced set of declarations and
+expressions that forms a minimal but turing complete language.</p>
+<p>For the time being, <em>it has no side effects</em>, which is intended since the
+purpose of LKQL is strictly to express queries.</p>
+<div class="section" id="data-types">
+<h3>Data types<a class="headerlink" href="#data-types" title="Permalink to this headline">¶</a></h3>
+<p>LKQL has a very limited number of data types for the moment. Here are the
+current data types:</p>
+<ul class="simple">
+<li><p>Integers: Very often used as parameters in queries, supports simple
+arithmetic.</p></li>
+<li><p>Strings: Built-in string type, that supports concatenation.</p></li>
+<li><p>Booleans: Built-in boolean type, that supports the usual expected boolean
+relational operators.</p></li>
+<li><p>Nodes: Coming from the queried language (in the common case, Ada), those are
+the only composite data types for the moment. They correspond to the syntax
+nodes of the source files being queried. They can be explored as part of the
+general language subset, through <span class="xref std std-ref">Field access</span>, or via the <span class="xref std std-ref">Tree
+query language subset</span>.</p></li>
+</ul>
+</div>
+<div class="section" id="declarations">
+<h3>Declarations<a class="headerlink" href="#declarations" title="Permalink to this headline">¶</a></h3>
+<p>Declarations in LKQL only belong at the top level. There is no support
+currently for nested declarations, except for
+<span class="xref std std-ref">Value declarations</span> in the <span class="xref std std-ref">Block expression</span>.</p>
+<div class="section" id="function-declaration">
+<h4>Function declaration<a class="headerlink" href="#function-declaration" title="Permalink to this headline">¶</a></h4>
+<p>Allows the user to declare an LKQL function that can be used to factor some
+computation.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">fun</span> <span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+</pre></div>
+</div>
+<p>The syntax is simple, you only declare argument names and an expression after
+the <code class="docutils literal notranslate"><span class="pre">=</span></code>.</p>
+<p>If you need to declare temporary named values in the body of your function, you
+can use a <span class="xref std std-ref">Block expression</span>.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">fun</span> <span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="k">val</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">;</span>
+    <span class="n">ret</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="value-declaration">
+<h4>Value declaration<a class="headerlink" href="#value-declaration" title="Permalink to this headline">¶</a></h4>
+<p>Declare a named value (often called a variable or constant in other languages).
+The value is immutable.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">a</span> <span class="o">=</span> <span class="m">12</span> <span class="o">+</span> <span class="m">15</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="expressions">
+<h3>Expressions<a class="headerlink" href="#expressions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="block-expression">
+<h4>Block expression<a class="headerlink" href="#block-expression" title="Permalink to this headline">¶</a></h4>
+<p>The block expression is useful to declare temporary named values. This can be
+useful to share the result of a temporary calculation, or to name an
+intermediate value to make the code more readable.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+   <span class="k">val</span> <span class="n">x</span> <span class="o">=</span> <span class="m">40</span><span class="p">;</span>
+   <span class="k">val</span> <span class="n">y</span> <span class="o">=</span> <span class="m">2</span><span class="p">;</span>
+   <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>As you can see in the example above, value declarations are ended by
+semicolons. After the last value declaration, you write the block’s result
+expression, without an ending semicolon.</p>
+</div>
+<div class="section" id="field-access">
+<h4>Field access<a class="headerlink" href="#field-access" title="Permalink to this headline">¶</a></h4>
+<p>A field access returns the contents of the syntax field <code class="docutils literal notranslate"><span class="pre">type_expr</span></code>.
+.. code-block:: lkql object_decl.type_expr</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Ultimately, this construction will be extended to allow access to struct
+fields, but structs are not yet supported.</p>
+</div>
+<p>For a
+reference of the existing fields for syntax nodes for Ada, look at the
+<a class="reference external" href="https://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/python_api_ref.html">Libadalang API doc</a>.
+The fields are prefixed by <code class="docutils literal notranslate"><span class="pre">f_</span></code> in the Python API reference, whereas
+they’re accessible without the prefix in LKQL.</p>
+</div>
+<div class="section" id="property-call">
+<h4>Property call<a class="headerlink" href="#property-call" title="Permalink to this headline">¶</a></h4>
+<p>Properties are methods on syntax nodes, returning results of high level
+queries, possibly answering semantic questions about the syntax tree. For a
+reference of the existing properties for Ada, look at the
+<a class="reference external" href="https://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/python_api_ref.html">Libadalang API doc</a>.
+The properties are prefixed by <code class="docutils literal notranslate"><span class="pre">p_</span></code> in the Python API reference, whereas
+they’re callable without the prefix in LKQL.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="n">object_decl</span><span class="p">.</span><span class="n">is_static_decl</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="function-call">
+<h4>Function call<a class="headerlink" href="#function-call" title="Permalink to this headline">¶</a></h4>
+<p><span class="xref std std-ref">Functions</span> defined in LKQL can be called with the
+function call expression.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">fun</span> <span class="n">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+
+<span class="k">val</span> <span class="n">c</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="m">12</span><span class="p">,</span> <span class="m">15</span><span class="p">)</span>
+<span class="k">val</span> <span class="n">d</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="m">12</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="m">15</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Parameters can be passed via positional or named associations.</p>
+</div>
+<div class="section" id="indexing-expression">
+<h4>Indexing expression<a class="headerlink" href="#indexing-expression" title="Permalink to this headline">¶</a></h4>
+<p>Indexing expressions allow the user to access elements of a list, array, or
+string.</p>
+<p>Here are examples of indexing expressions:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="n">list</span><span class="p">[</span><span class="m">0</span><span class="p">]</span>
+
+<span class="s">&quot;pouet&quot;</span><span class="p">[</span><span class="m">1</span><span class="p">]</span>
+
+<span class="p">{</span>
+    <span class="k">val</span> <span class="n">x</span> <span class="o">=</span> <span class="m">2</span><span class="p">;</span>
+    <span class="s">&quot;pouet&quot;</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="comparison-expression">
+<h4>Comparison expression<a class="headerlink" href="#comparison-expression" title="Permalink to this headline">¶</a></h4>
+<p>Comparison expressions are used to compare an object to another object, or
+pattern.</p>
+<div class="section" id="membership-expression">
+<h5>Membership expression<a class="headerlink" href="#membership-expression" title="Permalink to this headline">¶</a></h5>
+<p>The membership expression verifies that a collection (list/array/string)
+contains the given value.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="m">12</span> <span class="k">in</span> <span class="n">list</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="is-expression">
+<h5>Is expression<a class="headerlink" href="#is-expression" title="Permalink to this headline">¶</a></h5>
+<p>The “is” expression verifies if a node object matches a <span class="xref std std-ref">Pattern</span>.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">a</span> <span class="o">=</span> <span class="k">select</span> <span class="n">AdaNode</span>
+<span class="k">val</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="k">is</span> <span class="n">ObjectDecl</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="comparison-operators">
+<h5>Comparison operators<a class="headerlink" href="#comparison-operators" title="Permalink to this headline">¶</a></h5>
+<p>The usual comparison operators are available. Order dependent operators
+(<code class="docutils literal notranslate"><span class="pre">&lt;</span></code>/<code class="docutils literal notranslate"><span class="pre">&gt;</span></code>/…) are only usable on integers.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="m">12</span> <span class="o">&lt;</span> <span class="m">15</span>
+<span class="n">a</span> <span class="o">==</span> <span class="n">b</span>
+<span class="n">b</span> <span class="o">!=</span> <span class="n">c</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="list-comprehension">
+<h4>List comprehension<a class="headerlink" href="#list-comprehension" title="Permalink to this headline">¶</a></h4>
+<p>A list comprehension allows the user to create a new list by iterating on an
+existing collection, applying a mapping operation, and eventually a filtering
+operation.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="c"># Simple list comprehension that&#39;ll double every number in int_list if it</span>
+<span class="c"># is prime</span>
+
+<span class="p">[</span><span class="n">a</span> <span class="o">*</span> <span class="m">2</span> <span class="n">for</span> <span class="n">a</span> <span class="k">in</span> <span class="n">int_list</span> <span class="k">if</span> <span class="n">is_prime</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span>
+
+<span class="c"># Complex example interleaving two collections</span>
+
+<span class="k">val</span> <span class="n">subtypes</span> <span class="o">=</span> <span class="k">select</span> <span class="n">SubtypeIndication</span>
+<span class="k">val</span> <span class="n">objects</span> <span class="o">=</span> <span class="k">select</span> <span class="n">ObjectDecl</span>
+<span class="n">print</span><span class="p">([</span><span class="n">o</span><span class="p">.</span><span class="n">image</span> <span class="o">&amp;</span> <span class="s">&quot; &quot;</span> <span class="o">&amp;</span> <span class="n">st</span><span class="p">.</span><span class="n">image</span>
+       <span class="n">for</span> <span class="n">o</span> <span class="k">in</span> <span class="n">objects</span><span class="p">,</span> <span class="n">st</span> <span class="k">in</span> <span class="n">subtypes</span>
+       <span class="k">if</span> <span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">image</span> <span class="o">&amp;</span> <span class="s">&quot; &quot;</span> <span class="o">&amp;</span> <span class="n">st</span><span class="p">.</span><span class="n">image</span><span class="p">).</span><span class="n">length</span> <span class="o">!=</span> <span class="m">64</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>A list comprehension is a basic language construct, that, since LKQL is purely
+functional, replaces traditional for loops.</p>
+</div>
+<div class="section" id="if-expression">
+<h4>If expression<a class="headerlink" href="#if-expression" title="Permalink to this headline">¶</a></h4>
+<p>If expressions are traditional conditional expressions composed of a condition,
+an expression executed when the condition is true, and and expression executed
+when the condition is false.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="c"># No parentheses required</span>
+<span class="k">val</span> <span class="n">a</span> <span class="o">=</span> <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="m">12</span> <span class="k">then</span> <span class="n">c</span><span class="p">()</span> <span class="k">else</span> <span class="n">d</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="match-expression">
+<h4>Match expression<a class="headerlink" href="#match-expression" title="Permalink to this headline">¶</a></h4>
+<p>Pattern matching expression. Matchers will be evaluated in order against the
+match’s target expression. The first matcher to match the object will trigger
+the evaluation of the associated expression in the match arm.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">match</span> <span class="n">nodes</span><span class="p">[</span><span class="m">0</span><span class="p">]</span>
+  <span class="o">|</span> <span class="n">ObjectDecl</span><span class="p">(</span><span class="n">has_aliased</span><span class="o">=</span><span class="n">aliased</span> <span class="o">@</span> <span class="n">_</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">aliased</span>
+  <span class="o">|</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="n">has_aliased</span><span class="o">=</span><span class="n">aliased</span> <span class="o">@</span> <span class="n">_</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">aliased</span>
+  <span class="o">|</span> <span class="n">_</span> <span class="o">=&gt;</span> <span class="n">False</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For the moment, there is no check that the matcher is complete. A
+match expression where no arm has matched will raise an exception at
+runtime.</p>
+</div>
+<div class="admonition-todo admonition">
+<p class="admonition-title">todo</p>
+<p>Verify that bindings of names to matched values work correctly</p>
+</div>
+</div>
+<div class="section" id="literals-and-operators">
+<h4>Literals and Operators<a class="headerlink" href="#literals-and-operators" title="Permalink to this headline">¶</a></h4>
+<p>LKQL has literals for booleans, integers, strings, and null values:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">a</span> <span class="o">=</span> <span class="m">12</span>
+<span class="k">val</span> <span class="n">b</span> <span class="o">=</span> <span class="k">true</span>
+<span class="k">val</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&quot;hello&quot;</span>
+<span class="k">val</span> <span class="n">d</span> <span class="o">=</span> <span class="k">null</span>
+</pre></div>
+</div>
+<p>LKQL has a few built-in operators available:</p>
+<ul class="simple">
+<li><p>Basic arithmetic operators on integers</p></li>
+</ul>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">+</span> <span class="m">2</span> <span class="o">*</span> <span class="m">3</span> <span class="o">/</span> <span class="m">4</span> <span class="o">=</span> <span class="n">b</span>
+<span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span>
+<span class="n">b</span> <span class="o">&gt;=</span> <span class="n">c</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Basic relational operators on booleans</p></li>
+</ul>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">true</span> <span class="o">and</span> <span class="k">false</span> <span class="o">or</span> <span class="p">(</span><span class="n">a</span> <span class="o">=</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>String concatenation</p></li>
+</ul>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;Hello&quot;</span> <span class="o">&amp;</span> <span class="n">name</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="tree-query-language-subset">
+<h2>Tree query language subset<a class="headerlink" href="#tree-query-language-subset" title="Permalink to this headline">¶</a></h2>
+<p>The tree query language subset is mainly composed of three language constructs:
+patterns, queries and selectors.</p>
+<p>Patterns allow the user to express filtering logic on trees and graphs, akin to
+what regular expressions allow for strings.</p>
+<p>A lot of the ideas behind patterns are similar to ideas in
+<a class="reference external" href="https://developer.mozilla.org/fr/docs/Web/XPath">XPath</a>,
+or even in
+<a class="reference external" href="https://developer.mozilla.org/en-US/docs/Glossary/CSS_Selector">CSS selectors</a></p>
+<p>However, unlike in CSS or xpath, a pattern is just the filtering logic, not the
+traversal, even though filtering might contain sub traversals via selectors.</p>
+<p>The query allows to run the pattern on a tree, traversing its children.</p>
+<p>Here is a very simple example of a selector, that will select object
+declarations that have the aliased qualifier.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="n">ObjectDecl</span><span class="p">(</span><span class="n">has_aliased</span><span class="o">=</span><span class="k">true</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And here is its use in a query:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">ObjectDecl</span><span class="p">(</span><span class="n">has_aliased</span><span class="o">=</span><span class="k">true</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will query every source file in the LKQL context, and filter according to
+the pattern.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Queries are expressions, so you can write:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">a</span> <span class="o">=</span> <span class="k">select</span> <span class="n">ObjectDecl</span><span class="p">(</span><span class="n">has_aliased</span><span class="o">=</span><span class="k">true</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition-todo admonition">
+<p class="admonition-title">todo</p>
+<p>Patterns are not yet expressions, but they certainly could be and
+should be, so we’re planning on improving that at a later stage.</p>
+</div>
+<p>Finally, selectors are a way to express “traversal” logic on the node graph.
+Syntactic nodes, when explored through their syntactic children, form a tree.
+However:</p>
+<ul class="simple">
+<li><p>There are different ways to traverse this tree (for example, you can explore
+the parents starting from a node)</p></li>
+<li><p>There are non syntactic ways to explore nodes, for example using semantic
+properties such as going from references to their declarations, or going up
+the tree of base types for a given tagged type.</p></li>
+</ul>
+<p>All those traversals, including the most simple built-in one, use what is
+called selectors in LKQL.</p>
+<p>Selectors are a way to specify a traversal, which will return a lazy list of
+nodes as a result. Here is an example, the selector that will go up the parent
+chain.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">selector</span> <span class="n">parent</span>
+   <span class="o">|</span> <span class="n">AdaNode</span> <span class="o">=&gt;</span> <span class="k">rec</span> <span class="o">*</span><span class="n">it</span><span class="p">.</span><span class="n">parent</span>
+   <span class="o">|</span> <span class="n">_</span>       <span class="o">=&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="query-expression">
+<h3>Query expression<a class="headerlink" href="#query-expression" title="Permalink to this headline">¶</a></h3>
+<p>The query expression is extremely simple, and most of the complexity lies in
+the upcoming sections about patterns.</p>
+<p>A query traverses one or several trees, from one or several root nodes,
+applying the pattern on every node. It yields all matching nodes.</p>
+</div>
+<div class="section" id="pattern">
+<h3>Pattern<a class="headerlink" href="#pattern" title="Permalink to this headline">¶</a></h3>
+<p>Patterns are by far the most complex part of the tree query language subset,
+but at its core, the concept of a pattern is very simple:</p>
+<p>A pattern is at its core a very simple concept: it’s an expression that you
+will match against a node. In the context of a query, the pattern will return a
+node or collection of nodes for each matched node. In the context of an <code class="docutils literal notranslate"><span class="pre">is</span></code>
+comparison expression, lkql will check that the node matches the pattern, and
+produce <code class="docutils literal notranslate"><span class="pre">true</span></code> if it does.</p>
+<div class="section" id="high-level-pattern-kinds">
+<h4>High level pattern kinds<a class="headerlink" href="#high-level-pattern-kinds" title="Permalink to this headline">¶</a></h4>
+<p>There are two kinds of top-level patterns: chained patterns and nested patterns
+(called value_patterns in the grammar), and the way they’re different is in how
+you use sub-patterns. In the end they’ll they differ by which nodes will be
+produced by the pattern when used in a query. Let’s take an example to
+illustrate:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">ObjectDecl</span><span class="p">(</span><span class="n">default_expr</span> <span class="k">is</span> <span class="n">IntLiteral</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This query uses a nested pattern, it will return every <code class="docutils literal notranslate"><span class="pre">ObjectDecl</span></code> that has
+an <code class="docutils literal notranslate"><span class="pre">IntLiteral</span></code> node in the default expression.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">ObjectDecl</span><span class="p">.</span><span class="n">default_expr</span> <span class="k">is</span> <span class="n">IntLiteral</span>
+</pre></div>
+</div>
+<p>This query uses a chained pattern, it will return every <code class="docutils literal notranslate"><span class="pre">IntLiteral</span></code> that is
+the default expression of an <code class="docutils literal notranslate"><span class="pre">ObjectDecl</span></code>.</p>
+<p>Hence, the difference between the two kind of sub-patterns is that in the first
+case, the sub-pattern doesn’t change what is returned, it only adds a filtering
+condition, whereas in the second case, the chained pattern makes the pattern
+return a sub object.</p>
+</div>
+<div class="section" id="simple-value-patterns">
+<h4>Simple value patterns<a class="headerlink" href="#simple-value-patterns" title="Permalink to this headline">¶</a></h4>
+<p>A value pattern is the simplest atom for node patterns.</p>
+<p>In its simple form, it can be either <code class="docutils literal notranslate"><span class="pre">_</span></code>, which is the wildcard pattern, and
+will match everything, or a node name:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">_</span> <span class="c"># Will select every node</span>
+<span class="k">select</span> <span class="n">BasicDecl</span> <span class="c"># Will select every basic declaration</span>
+</pre></div>
+</div>
+<p>In its more complex form, it can have sub-patterns in an optional part between
+parentheses:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">BasicDecl</span><span class="p">(...)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="nested-sub-patterns">
+<h4>Nested sub patterns<a class="headerlink" href="#nested-sub-patterns" title="Permalink to this headline">¶</a></h4>
+<p>Inside the optional parentheses of value patterns, the user can add
+sub-patterns that will help refine the query. Those patterns can be of three
+different kind:</p>
+<div class="section" id="selector-predicate">
+<h5>Selector predicate<a class="headerlink" href="#selector-predicate" title="Permalink to this headline">¶</a></h5>
+<p>A selector predicate is a sub-pattern that allows you to run a sub-query and to
+match its results:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">Body</span><span class="p">(</span><span class="n">any</span> <span class="n">children</span> <span class="k">is</span> <span class="n">ForLoopStmt</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The quantifier part (<code class="docutils literal notranslate"><span class="pre">any</span></code>) can be either <code class="docutils literal notranslate"><span class="pre">any</span></code> or <code class="docutils literal notranslate"><span class="pre">all</span></code>, which will
+alter how the sub-pattern matches:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">all</span></code> will match only if all nodes returned by the selector match the condition</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">any</span></code> will match as soon as at least one child matches the condition.</p></li>
+</ul>
+<p>Any of the <span class="xref std std-ref">Built-in selectors</span> can be used, or even custom selectors.</p>
+</div>
+<div class="section" id="field-predicate">
+<h5>Field predicate<a class="headerlink" href="#field-predicate" title="Permalink to this headline">¶</a></h5>
+<p>A field predicate is a sub-pattern that allows you to match a sub-pattern
+against a specific field in the parent object. We have already seen such a
+construct in the introduction, and it’s one of the simplest kind of patterns.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">ObjectDecl</span><span class="p">(</span><span class="n">default_val</span> <span class="k">is</span> <span class="n">IntLiteral</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="property-call-predicate">
+<h5>Property call predicate<a class="headerlink" href="#property-call-predicate" title="Permalink to this headline">¶</a></h5>
+<p>A property predicate is very similar to a field predicate, except that a
+property of the node is called, instead of a field accessed. Syntactically,
+this is denoted by the parentheses after the property name.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">BaseId</span><span class="p">(</span><span class="n">referenced_decl</span><span class="p">()</span> <span class="k">is</span> <span class="n">ObjectDecl</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="chained-sub-patterns">
+<h4>Chained sub patterns<a class="headerlink" href="#chained-sub-patterns" title="Permalink to this headline">¶</a></h4>
+<p>Chained sub patterns are roughly similar to nested sub patterns, and come in
+similar flavours. The big difference between the two kind of patterns, is which
+nodes are yielded when the pattern is used in a query. Chained patterns will
+yield the sub-nodes, rather than just filtering and returning the top level
+node.</p>
+<p>You have the three different kind of chained patterns, corresponding to the
+nested ones.</p>
+<div class="section" id="selector-chain">
+<h5>Selector chain<a class="headerlink" href="#selector-chain" title="Permalink to this headline">¶</a></h5>
+<p>A selector chain is a sub-pattern that allows you to recursively yield a
+sub-query via a selector call:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">Body</span> <span class="n">any</span> <span class="n">children</span> <span class="k">is</span> <span class="n">ForLoopStmt</span>
+</pre></div>
+</div>
+<p>The quantifier part (<code class="docutils literal notranslate"><span class="pre">any</span></code>) can be either <code class="docutils literal notranslate"><span class="pre">any</span></code> or <code class="docutils literal notranslate"><span class="pre">all</span></code>, which will
+alter how the sub-pattern matches:</p>
+</div>
+<div class="section" id="field-chain">
+<h5>Field chain<a class="headerlink" href="#field-chain" title="Permalink to this headline">¶</a></h5>
+<p>A field chain is a sub-pattern that allows you to yield a specific field in the
+parent object, given that it satisfies a pattern.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">ObjectDecl</span><span class="p">.</span><span class="n">default_val</span> <span class="k">is</span> <span class="n">IntLiteral</span>
+</pre></div>
+</div>
+<p>This will yield the default values for object decls, given that those default
+values are int literals.</p>
+</div>
+<div class="section" id="property-chain">
+<h5>Property chain<a class="headerlink" href="#property-chain" title="Permalink to this headline">¶</a></h5>
+<p>A property chain is very similar to a field chain, except that a property of
+the node is called, instead of a field accessed. Syntactically, this is denoted
+by the parentheses after the property name.</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">BaseId</span> <span class="n">referenced_decl</span><span class="p">()</span> <span class="k">is</span> <span class="n">ObjectDecl</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="filtered-patterns-and-binding-patterns">
+<h4>Filtered patterns and binding patterns<a class="headerlink" href="#filtered-patterns-and-binding-patterns" title="Permalink to this headline">¶</a></h4>
+<p>While you can express a lot of things via the regular pattern syntax mentioned
+above, sometimes it is necessary to be able to express an arbitrary boolean
+condition in patterns. This is done via the <cite>when</cite> clause.</p>
+<p>However, in order to be able to express conditions on the currently matched
+objects, or arbitrary objects in the query, naming those objects is necessary.
+This is done via binding patterns:</p>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">select</span> <span class="n">b</span> <span class="o">@</span> <span class="n">BaseId</span> <span class="c"># Same as &quot;select BaseId&quot;, but now every BaseId object</span>
+                  <span class="c"># that is matched has a name that can be used in the when</span>
+                  <span class="c"># clause</span>
+</pre></div>
+</div>
+<div class="highlight-lkql notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">a</span> <span class="o">=</span> <span class="k">select</span> <span class="n">BasicDecl</span>
+<span class="k">select</span> <span class="n">b</span> <span class="o">@</span> <span class="n">BaseId</span> <span class="k">when</span> <span class="n">b</span><span class="p">.</span><span class="n">referenced_decl</span><span class="p">()</span> <span class="o">=</span> <span class="n">a</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="selector-declaration">
+<h3>Selector declaration<a class="headerlink" href="#selector-declaration" title="Permalink to this headline">¶</a></h3>
+<p>Selectors are a special form of functions that return a lazy stream of node
+values. They’re at the basis of the query DSL of LKQL, allowing the easy
+expression of traversal blueprints.</p>
+<p>For example, by default, the <span class="xref std std-ref">Query expression</span> explores the tree via the
+default <code class="docutils literal notranslate"><span class="pre">children</span></code> selector.</p>
+<p>You’ve already seen selectors used in previous sections, and, most of the time,
+you might not need to define your own, but in case you need to, here is how
+they work.</p>
+<div class="section" id="defining-a-selector">
+<h4>Defining a selector<a class="headerlink" href="#defining-a-selector" title="Permalink to this headline">¶</a></h4>
+<p>A selector is a recursive function. It has a single implicit <cite>it</cite> argument that
+represents the current node. A selector has an implicit top level <span class="xref std std-ref">Match
+expression</span> matching on <cite>it</cite>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The principle of selectors is more general than nodes, but is for the
+moment only usable with an <code class="docutils literal notranslate"><span class="pre">it</span></code> argument that is of type node.</p>
+</div>
+<p>In the branch of a selector, you have three choices:</p>
+<ul class="simple">
+<li><p>You can <strong>recurse</strong> via the <code class="docutils literal notranslate"><span class="pre">rec</span></code> keyword, on nodes reachable from <code class="docutils literal notranslate"><span class="pre">it</span></code>.
+The node or nodes you will recurse on via this keyword will both be “yielded”
+by the selector, and explored further (ie. the selector will be called on
+them)</p></li>
+<li><p>You can <strong>recurse but skip the node(s)</strong>, via the <code class="docutils literal notranslate"><span class="pre">skip</span></code> keyword. This’ll have
+the same effect as <code class="docutils literal notranslate"><span class="pre">rec</span></code>, except that it will not yield the node(s).</p></li>
+<li><p>You can <strong>return but not recurse</strong>: This is the default action (requires no
+keyword), and will yield the node(s), but not recurse on them.</p></li>
+</ul>
+</div>
+<div class="section" id="built-in-selectors">
+<h4>Built-in selectors<a class="headerlink" href="#built-in-selectors" title="Permalink to this headline">¶</a></h4>
+<p>The built-in selectors are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parent</span></code>: parent nodes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">children</span></code>: child nodes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">prevSiblings</span></code>: sibling nodes that are before the current node.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nextSiblings</span></code>: sibling nodes that are after the current node.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">superTypes</span></code>: if the current node is a type, then all its supertypes.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">LKQL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">LKQL language reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#general-purpose-language-subset">General purpose language subset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tree-query-language-subset">Tree query language subset</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to LKQL’s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Raphael Amiard.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/language_reference.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
