@@ -66,10 +66,10 @@ Function declaration
 .. lkql_doc_class:: ParameterDecl
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/fun_decl.svg
+    :file: ../../lkql/build/railroad-diagrams/fun_decl.svg
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/param.svg
+    :file: ../../lkql/build/railroad-diagrams/param.svg
 
 Allows the user to declare an LKQL function that can be used to factor some
 computation.
@@ -97,7 +97,7 @@ Value declaration
 .. lkql_doc_class:: ValDecl
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/val_decl.svg
+    :file: ../../lkql/build/railroad-diagrams/val_decl.svg
 
 
 Declare a named value (often called a variable or constant in other languages).
@@ -114,7 +114,7 @@ Block expression
 ^^^^^^^^^^^^^^^^
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/block_expr.svg
+    :file: ../../lkql/build/railroad-diagrams/block_expr.svg
 
 .. lkql_doc_class:: BlockExpr
 
@@ -139,13 +139,28 @@ Field access
 
 .. lkql_doc_class:: DotAccess
 
-A field access returns the contents of the syntax field ``type_expr``.
-.. code-block:: lkql object_decl.type_expr
+A field access returns the contents of a field. In the following example, we
+get the content of the  ``type_expr`` syntax field on a node of type
+``ObjectDecl``.
+
+.. code-block:: lkql
+
+    object_decl.type_expr
 
 .. note::
 
     Ultimately, this construction will be extended to allow access to struct
     fields, but structs are not yet supported.
+
+A regular field access on a nullable variable is illegal, which is why field
+access has a variant, which is called a "safe access":
+
+.. code-block:: lkql
+
+    object_decl?.type_expr
+
+The safe access will return null if the left hand side is null. This allows
+users to chain accesses without having to checks for nulls at every step.
 
 For a
 reference of the existing fields for syntax nodes for Ada, look at the
@@ -158,6 +173,7 @@ Property call
 ^^^^^^^^^^^^^
 
 .. lkql_doc_class:: DotCall
+.. lkql_doc_class:: SafeCall
 
 Properties are methods on syntax nodes, returning results of high level
 queries, possibly answering semantic questions about the syntax tree. For a
@@ -171,6 +187,27 @@ they're callable without the prefix in LKQL.
 
     object_decl.is_static_decl()
 
+Just as for field accesses, property calls have their "safe property calls"
+variant that can be used to call a property on a nullable object, and return
+null if the object is null.
+
+.. code-block:: lkql
+
+    object_decl?.is_static_decl()
+
+Unwrap expression
+^^^^^^^^^^^^^^^^^
+
+.. lkql_doc_class:: Unwrap
+
+When you have a nullable object and you want to make it non nullable, you can
+use the unwrap expression. This is useful after a chain of safe accesses/calls,
+for example.
+
+.. code-block:: lkql
+    object_decl?.type_expr?.designated_type_decl!!
+
+Unwrap will raise an error if the value is null.
 
 Function call
 ^^^^^^^^^^^^^
@@ -179,7 +216,7 @@ Function call
 .. lkql_doc_class:: Arg
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/fun_call.svg
+    :file: ../../lkql/build/railroad-diagrams/fun_call.svg
 
 
 :ref:`Functions <Function declaration>` defined in LKQL can be called with the
@@ -197,7 +234,7 @@ Parameters can be passed via positional or named associations.
 Indexing expression
 ^^^^^^^^^^^^^^^^^^^
 
-.. lkql_doc_class:: DotCall
+.. lkql_doc_class:: Indexing
 
 Indexing expressions allow the user to access elements of a list, array, or
 string.
@@ -219,7 +256,7 @@ Comparison expression
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/comp_expr.svg
+    :file: ../../lkql/build/railroad-diagrams/comp_expr.svg
 
 Comparison expressions are used to compare an object to another object, or
 pattern.
@@ -267,9 +304,10 @@ List comprehension
 ^^^^^^^^^^^^^^^^^^
 
 .. lkql_doc_class:: ListComprehension
+.. lkql_doc_class:: ListCompAssoc
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/listcomp.svg
+    :file: ../../lkql/build/railroad-diagrams/listcomp.svg
 
 A list comprehension allows the user to create a new list by iterating on an
 existing collection, applying a mapping operation, and eventually a filtering
@@ -299,7 +337,7 @@ If expression
 .. lkql_doc_class:: IfThenElse
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/if_then_else.svg
+    :file: ../../lkql/build/railroad-diagrams/if_then_else.svg
 
 If expressions are traditional conditional expressions composed of a condition,
 an expression executed when the condition is true, and and expression executed
@@ -314,9 +352,10 @@ Match expression
 ^^^^^^^^^^^^^^^^
 
 .. lkql_doc_class:: Match
+.. lkql_doc_class:: MatchArm
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/match.svg
+    :file: ../../lkql/build/railroad-diagrams/match.svg
 
 Pattern matching expression. Matchers will be evaluated in order against the
 match's target expression. The first matcher to match the object will trigger
@@ -343,6 +382,7 @@ Literals and Operators
 .. lkql_doc_class:: Literal
 
 .. lkql_doc_class:: ArithBinOp
+.. lkql_doc_class:: NotNode
 
 LKQL has literals for booleans, integers, strings, and null values:
 
@@ -367,7 +407,7 @@ LKQL has a few built-in operators available:
 
 .. code-block:: lkql
 
-    true and false or (a = b)
+    true and false or (a = b) and (not c)
 
 - String concatenation
 
@@ -449,7 +489,9 @@ Query expression
 ----------------
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/query.svg
+    :file: ../../lkql/build/railroad-diagrams/query.svg
+
+.. lkql_doc_class:: Query
 
 The query expression is extremely simple, and most of the complexity lies in
 the upcoming sections about patterns.
@@ -460,14 +502,17 @@ applying the pattern on every node. It yields all matching nodes.
 Pattern
 -------
 
-.. raw:: html
-    :file: ../../lkql/build/doc/svg/pattern.svg
+.. lkql_doc_class:: UnfilteredPattern
+.. lkql_doc_class:: ValuePattern
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/chained_pattern.svg
+    :file: ../../lkql/build/railroad-diagrams/pattern.svg
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/binding_pattern.svg
+    :file: ../../lkql/build/railroad-diagrams/chained_pattern.svg
+
+.. raw:: html
+    :file: ../../lkql/build/railroad-diagrams/binding_pattern.svg
 
 Patterns are by far the most complex part of the tree query language subset,
 but at its core, the concept of a pattern is very simple:
@@ -510,7 +555,7 @@ Simple value patterns
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/value_pattern.svg
+    :file: ../../lkql/build/railroad-diagrams/value_pattern.svg
 
 A value pattern is the simplest atom for node patterns.
 
@@ -532,8 +577,11 @@ parentheses:
 Nested sub patterns
 ^^^^^^^^^^^^^^^^^^^
 
+.. lkql_doc_class:: NodePatternDetail
+.. lkql_doc_class:: DetailValue
+
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/node_pattern_detail.svg
+    :file: ../../lkql/build/railroad-diagrams/pattern_arg.svg
 
 Inside the optional parentheses of value patterns, the user can add
 sub-patterns that will help refine the query. Those patterns can be of three
@@ -581,6 +629,9 @@ this is denoted by the parentheses after the property name.
 
 Chained sub patterns
 ^^^^^^^^^^^^^^^^^^^^
+
+.. lkql_doc_class:: ChainedPatternLink
+.. lkql_doc_class:: SelectorCall
 
 Chained sub patterns are roughly similar to nested sub patterns, and come in
 similar flavours. The big difference between the two kind of patterns, is which
@@ -631,6 +682,9 @@ by the parentheses after the property name.
 Filtered patterns and binding patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. lkql_doc_class:: FilteredPattern
+.. lkql_doc_class:: BindingPattern
+
 While you can express a lot of things via the regular pattern syntax mentioned
 above, sometimes it is necessary to be able to express an arbitrary boolean
 condition in patterns. This is done via the `when` clause.
@@ -653,14 +707,19 @@ This is done via binding patterns:
 Selector declaration
 --------------------
 
-.. raw:: html
-    :file: ../../lkql/build/doc/svg/selector_decl.svg
+.. lkql_doc_class:: SelectorDecl
+.. lkql_doc_class:: SelectorExpr
+.. lkql_doc_class:: SelectorExprMode
+.. lkql_doc_class:: SelectorArm
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/selector_arm.svg
+    :file: ../../lkql/build/railroad-diagrams/selector_decl.svg
 
 .. raw:: html
-    :file: ../../lkql/build/doc/svg/selector_expr.svg
+    :file: ../../lkql/build/railroad-diagrams/selector_arm.svg
+
+.. raw:: html
+    :file: ../../lkql/build/railroad-diagrams/selector_expr.svg
 
 Selectors are a special form of functions that return a lazy stream of node
 values. They're at the basis of the query DSL of LKQL, allowing the easy
@@ -695,6 +754,10 @@ In the branch of a selector, you have three choices:
 
 * You can **return but not recurse**: This is the default action (requires no
   keyword), and will yield the node(s), but not recurse on them.
+
+.. code-block:: lkql
+
+    selector 
 
 Built-in selectors
 ^^^^^^^^^^^^^^^^^^
